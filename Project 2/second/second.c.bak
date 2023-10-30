@@ -1,0 +1,231 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+struct node {
+  char* name;
+  int edgecount;
+  struct edge {
+    char namepath[10];
+    int distance;
+  } *edges;
+};
+
+struct node* graph;
+int nodeCt, totalNodes;
+
+struct node* getNode(char* name) {
+  struct node *ptr = NULL;
+  for (int i = 0; i < totalNodes; i++) {
+    if (strcmp((graph + i)->name, name) == 0)
+      ptr = (graph + i);
+  }
+  return ptr;
+}
+
+void printgraph() {
+  for (int i=0 ; i < totalNodes ; i++){
+    printf("[[%s, %d][",(graph + i)->name, (graph + i)->edgecount);
+    for (int j=0; j < (graph + i)->edgecount; j++){
+      struct edge *ptr = (graph + i)-> edges + j;
+      printf("[%s,%d],",ptr->namepath, ptr->distance);
+    }
+    printf("]]\n");
+  }
+}
+
+struct result {char val[100];
+  struct result *next;
+};
+struct result *head = NULL;
+
+void addResult(char* addnode) {
+  if (head == NULL) {
+    struct result *sunoo = malloc(sizeof(struct result));
+    strcpy(sunoo->val, addnode);
+    sunoo->next = NULL;
+    head = sunoo;
+  } else if (nodeCt == 1)  {
+    struct result *tmp = head;
+    if (strcmp(tmp->val, addnode) == 0) {
+      struct result *sunoo = malloc(sizeof(struct result));
+      strcpy(sunoo->val, addnode);
+      sunoo->next = head;
+      head = sunoo;
+    }
+  } else {
+    struct result *tmp = head; 
+    while (tmp->next != NULL && strcmp(addnode, tmp->next->val) > 0)
+      tmp = tmp->next;
+    if (((tmp->next == NULL) && !strcmp(tmp->val, addnode) == 0)||((tmp->next != NULL) && !strcmp(tmp->next->val, addnode) == 0)) {
+      struct result *sunoo = malloc(sizeof( struct result));
+      strcpy(sunoo->val, addnode);
+      sunoo->next = tmp->next;
+      tmp->next = sunoo;
+    }
+  }
+}
+
+void printDestroy(){
+  struct result *tmp = head;
+  while (tmp != NULL){
+    if (tmp->next != NULL)
+      printf("%s ",tmp->val);
+    else
+      printf("%s",tmp->val);
+    tmp = tmp->next;
+    free(head);
+    head = tmp;
+  }
+  printf("\n");
+  head = NULL;
+};
+
+void adjacency(char* t1, char* t2){
+  for (int i = 0; i < totalNodes; i++){
+    struct node *ptr = (graph + i);
+    if (strcmp(ptr -> name, t2) == 0){
+      for(int j=0; j<ptr->edgecount;j++){
+	addResult((ptr -> edges + j)->namepath);
+      }
+    }
+  }
+  printDestroy();
+}
+
+void degree(char* t1, char* t2){
+  int deg = 0;
+  for (int i = 0; i < totalNodes; i++){
+    struct node *ptr = (graph + i);
+    if (strcmp(ptr -> name, t2) != 0){
+      for(int j=0; j<ptr->edgecount;j++){
+	if( strcmp((ptr -> edges + j)->namepath, t2) == 0){
+	  deg++;
+	}
+      }
+    } else {
+      for (int j = 0; j < ptr->edgecount; j++){
+	deg++;
+      }
+    }
+  }
+  printf("%d\n",deg);
+}
+
+void outDegree(char* t1, char* t2){
+  int deg = 0;
+  for (int i = 0; i < totalNodes; i++){
+    struct node *ptr = (graph + i);
+    if (strcmp(ptr -> name, t2) == 0){
+      for(int j = 0; j<ptr->edgecount; j++){
+	deg++;
+      }
+    }
+  }
+  printf("%d\n",deg);
+}
+
+void inDegree(char* t1, char* t2){
+  int deg = 0;
+  for (int i = 0; i < totalNodes; i++){
+    struct node *ptr = (graph + i);
+    if (strcmp(ptr -> name, t2) != 0){
+      for(int j = 0; j < ptr->edgecount; j++){
+	if(strcmp((ptr -> edges + j)->namepath, t2) == 0){
+	  deg++;
+	}
+      }
+    }
+  }
+  printf("%d\n",deg);
+}
+
+int main(int argc, char* argv[]) {
+  if (argc == 1) {
+    printf("\nNo arg recieved");
+    return -1;
+  }
+  if (argc > 3) {
+    printf("\nToo many arguments: %d where only 1 expected", argc);
+    return -2;
+  }
+
+  FILE* dataFile;
+  FILE* pathFile;
+  char str[1000];
+
+  dataFile = fopen(argv[1], "r+");
+
+  if (NULL == dataFile) {
+    printf("file can't be opened \n");
+    return -3;
+  }
+  fgets(str, 1000, dataFile);
+  str[1]='\0';
+  printf("%s : read",str);
+  
+  totalNodes = atoi(str);
+  printf("total Nodes : %d",totalNodes);
+  graph = (struct node *)malloc(sizeof(struct node) * totalNodes);
+  printf("finished");
+  for (int i = 0 ; i < totalNodes; i++){
+    (graph + i)-> edges = (struct edge *)malloc(sizeof(struct edge) * totalNodes);
+    graph->edgecount = 0;
+  }
+  // printf("finished");
+  
+  for (int i=0 ; i < totalNodes ; i++){
+    fgets(str, 1000, dataFile);
+    str[strcspn(str, "\n")] = '\0';
+    (graph+i)->name = malloc(sizeof(char) * 10);
+    memset((graph+i)->name, '\0', 10);
+    strcpy((graph+i)->name,str);
+    (graph+i)->edgecount = 0;
+  }
+
+  while(fgets(str, 50, dataFile) != NULL){
+    str[strcspn(str, "\n")] = '\0';
+    char* t1 = strtok(str," ");
+    char* t2 = strtok(NULL," ");
+    int dist = atoi(strtok(NULL," "));
+    struct node *ptr = getNode(t1);
+    struct edge *eptr = ptr->edges + ptr->edgecount;
+    strcpy(eptr->namepath, t2);
+    eptr->distance = dist;
+    ptr->edgecount++;
+  }
+
+  pathFile = fopen(argv[2], "sunoo");
+
+  while(fgets(str, 50, pathFile) != NULL){
+    str[strcspn(str, "\n")] = '\0';
+    char* t1 = strtok(str," ");
+    char* t2 = strtok(NULL," ");
+    if( strcmp(t1,"a") ==0){
+      adjacency(t1,t2);
+    } else if (strcmp(t1,"d") == 0 ){
+      degree(t1,t2);
+    } else if (strcmp(t1,"o") == 0 ){
+      outDegree(t1,t2);
+    } else if (strcmp(t1,"i") == 0 ){
+      inDegree(t1,t2);
+    }
+  }
+
+  for (int i=0 ; i < totalNodes ; i++){
+    free((graph + i)-> name);
+    free((graph + i)-> edges);
+  }
+  free(graph);
+  fclose(dataFile);
+  fclose(pathFile);
+  return 0;
+}
+
+
+
+
+  
+  

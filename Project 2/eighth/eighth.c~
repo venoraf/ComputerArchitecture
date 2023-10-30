@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <limits.h>
+
+int main(int argc, char* argv[]) {
+  if (argc == 1) {
+    printf("\nNo arg recieved");
+    return -1;
+  }
+
+  if (argc > 2) {
+    printf("\nToo many arguments: %d where only 1 expected", argc);
+    return -2;
+  }
+
+  FILE* dataFile;
+  char str[1000];
+  char out[1000];
+
+  // open file
+  //printf("Opening %s", argv[1]);
+  dataFile = fopen(argv[1], "r");
+
+  if (NULL == dataFile) {
+    printf("file can't be opened \n");
+    return -3;
+  }
+  while (fgets(str, 1000, dataFile) != NULL)
+    {
+      str[strcspn(str, "\n")] = '\0';
+      char* t1 = strtok(str, " ");
+      char* t2 = strtok(NULL, " ");
+      double numVal = atof(t1);
+      double tmpVal = numVal;
+      int rad = atoi(t2);
+      int pwr = 0;
+      int mantissa = 0;
+      memset(out, '\0', 1000);
+      while (tmpVal > 2) {
+	tmpVal = tmpVal / 2;
+	pwr++;
+      }
+      while (tmpVal < 1) {
+	tmpVal = tmpVal * 2;
+	pwr--;
+      }
+
+      tmpVal -= 1;
+      out[0] = '1';
+      out[1] = '.';
+      int inx = 2;
+      for (int i = 1; i <= rad; i++) {
+	//printf("%f %f\n", pow(2, i * -1), tmpVal);
+	if (tmpVal < pow(2, i * -1)) {
+	  out[inx] = '0';
+	} else {
+	  out[inx] = '1';
+	  tmpVal -= pow(2, i * -1);
+	}
+	inx++;
+      }
+      printf("%s %d\n", out, pwr );
+    }
+}
